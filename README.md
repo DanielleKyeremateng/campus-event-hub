@@ -5,7 +5,7 @@ Campus Event Hub is a comprehensive event management system designed for educati
 
 ## 🌐 Deployment Links
 - **Frontend**: [Campus Event Hub App](https://campus-event-hub.vercel.app)
-- **Backend API**: [Campus Event Hub API](https://campus-event-hub-api.onrender.com)
+- **Backend API**: [Campus Event Hub API](https://campus-event-hub.onrender.com/)
 
 ## 🔑 Test Login Credentials
 ### Admin Account

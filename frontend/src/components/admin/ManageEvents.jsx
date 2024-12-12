@@ -15,7 +15,7 @@ const ManageEvents = () => {
 
   const fetchEvents = async () => {
     try {
-      const data = await eventsCreatedByUser(user.id);
+      const data = await eventsCreatedByUser(user?.id);
       setEvents(data || []);
     } catch (error) {
       toast.error("Failed to fetch events");
