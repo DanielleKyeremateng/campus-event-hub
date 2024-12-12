@@ -10,11 +10,11 @@ Campus Event Hub is a comprehensive event management system designed for educati
 ## 🔑 Test Login Credentials
 ### Admin Account
 - **Email**: admin@mail.com
-- **Password**: Admin123!
+- **Password**: Admin1234
 
 ### Test User Account
-- **Email**: testuser@example.com
-- **Password**: Test123!
+- **Email**: user@mail.com
+- **Password**: User1234
 
 ## ✨ Features
 - [x] User Authentication (Login/Register)
