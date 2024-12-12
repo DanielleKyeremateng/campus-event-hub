@@ -130,7 +130,11 @@ const EventList = () => {
                 ))
             : filteredEvents.map((event) => (
                 <motion.div key={event._id} variants={itemVariants}>
-                  <EventCard event={event} userid={user.id} onRSVP={onRSVP} />
+                  <EventCard
+                    event={event}
+                    userid={user?.id || null} // Add null fallback
+                    onRSVP={onRSVP}
+                  />
                 </motion.div>
               ))}
         </motion.div>

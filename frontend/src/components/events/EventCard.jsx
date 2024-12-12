@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import RSVPButton from "./RSVPButton";
 
-const EventCard = ({ event, userid, onRSVP }) => {
+const EventCard = ({ event, userid = null, onRSVP }) => {
   return (
     <motion.div className='bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 h-[500px] flex flex-col'>
       <div className='relative h-48 flex-shrink-0'>
