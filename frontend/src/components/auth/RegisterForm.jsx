@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { validateEmail, validatePassword } from "../../utils/validation";
 import { ROUTES, ERROR_MESSAGES, EVENT_TYPES } from "../../utils/constants";
@@ -10,38 +11,26 @@ import api from "../../services/api";
 export default function RegisterForm() {
   const navigate = useNavigate();
   const { login, user } = useAuth();
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    preferences: [],
-    phoneNumber: "",
-    organization: "",
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+  } = useForm({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      preferences: [],
+      phoneNumber: "",
+      organization: "",
+    },
   });
-  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const handlePreferenceChange = (type) => {
-    setFormData((prev) => ({
-      ...prev,
-      preferences: prev.preferences.includes(type)
-        ? prev.preferences.filter((t) => t !== type)
-        : [...prev.preferences, type],
-    }));
-  };
 
   useEffect(() => {
     if (user) {
@@ -49,58 +38,40 @@ export default function RegisterForm() {
     }
   }, [user, navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = {};
+  const onSubmit = async (data) => {
+    if (!validateEmail(data.email)) {
+      return toast.error(ERROR_MESSAGES.INVALID_EMAIL);
+    }
+    if (!validatePassword(data.password)) {
+      return toast.error(ERROR_MESSAGES.INVALID_PASSWORD);
+    }
+    if (data.password !== data.confirmPassword) {
+      return toast.error("Passwords do not match");
+    }
+    if (data.preferences.length === 0) {
+      return toast.error("Please select at least one preference");
+    }
 
-    if (!formData.firstName) newErrors.firstName = "First name is required";
-    if (!formData.lastName) newErrors.lastName = "Last name is required";
-    if (!validateEmail(formData.email))
-      newErrors.email = ERROR_MESSAGES.INVALID_EMAIL;
-    if (!validatePassword(formData.password))
-      newErrors.password = ERROR_MESSAGES.INVALID_PASSWORD;
-    if (formData.password !== formData.confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
-    if (formData.preferences.length === 0)
-      newErrors.preferences = "Please select at least one preference";
+    setIsLoading(true);
+    const loadingToast = toast.loading("Creating your account...");
 
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      setIsLoading(true);
-      const loadingToast = toast.loading("Creating your account...");
-
-      try {
-        const response = await api.post("/auth/signup", formData);
-
-        if (response.data) {
-          login(response.data);
-          toast.dismiss(loadingToast);
-          toast.success("Account created successfully!");
-          navigate("/");
-        }
-      } catch (error) {
+    try {
+      const response = await api.post("/auth/signup", data);
+      if (response.data) {
+        login(response.data);
         toast.dismiss(loadingToast);
-
-        // Get the specific error message from the server response
-        const errorMessage =
-          error.response?.data?.message ||
-          error.response?.data?.error ||
-          "Failed to create account. Please try again.";
-
-        toast.error(errorMessage);
-      } finally {
-        setIsLoading(false);
+        toast.success("Account created successfully!");
+        navigate("/");
       }
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      const errorMessage =
+        error.response?.data?.message || "Failed to create account";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const inputClasses = (error) => `
-    w-full px-4 py-2 rounded-lg border 
-    ${error ? "border-red-500" : "border-gray-300"}
-    focus:outline-none focus:ring-2 focus:ring-purple-500 
-    focus:border-transparent transition-all duration-200
-  `;
 
   return (
     <motion.div
@@ -117,9 +88,8 @@ export default function RegisterForm() {
           Create Your Account
         </motion.h2>
 
-        <form onSubmit={handleSubmit} className='space-y-6'>
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-            {/* Name Fields */}
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>
                 First Name
@@ -127,10 +97,12 @@ export default function RegisterForm() {
               <motion.input
                 whileFocus={{ scale: 1.01 }}
                 type='text'
-                name='firstName'
-                value={formData.firstName}
-                onChange={handleChange}
-                className={inputClasses(errors.firstName)}
+                {...register("firstName", {
+                  required: "First name is required",
+                })}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  errors.firstName ? "border-red-500" : "border-gray-300"
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 placeholder='Enter your first name'
               />
               {errors.firstName && (
@@ -139,7 +111,7 @@ export default function RegisterForm() {
                   animate={{ opacity: 1 }}
                   className='mt-1 text-sm text-red-500'
                 >
-                  {errors.firstName}
+                  {errors.firstName.message}
                 </motion.p>
               )}
             </div>
@@ -151,10 +123,10 @@ export default function RegisterForm() {
               <motion.input
                 whileFocus={{ scale: 1.01 }}
                 type='text'
-                name='lastName'
-                value={formData.lastName}
-                onChange={handleChange}
-                className={inputClasses(errors.lastName)}
+                {...register("lastName", { required: "Last name is required" })}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  errors.lastName ? "border-red-500" : "border-gray-300"
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 placeholder='Enter your last name'
               />
               {errors.lastName && (
@@ -163,13 +135,48 @@ export default function RegisterForm() {
                   animate={{ opacity: 1 }}
                   className='mt-1 text-sm text-red-500'
                 >
-                  {errors.lastName}
+                  {errors.lastName.message}
                 </motion.p>
               )}
             </div>
           </div>
 
-          {/* Email Field */}
+          {/* Username Field */}
+          <div>
+            <label className='block text-sm font-medium text-gray-700 mb-1'>
+              Username
+            </label>
+            <motion.input
+              whileFocus={{ scale: 1.01 }}
+              type='text'
+              {...register("username", {
+                required: "Username is required",
+                minLength: {
+                  value: 3,
+                  message: "Username must be at least 3 characters",
+                },
+                pattern: {
+                  value: /^[a-zA-Z0-9_-]+$/,
+                  message:
+                    "Username can only contain letters, numbers, underscores and dashes",
+                },
+              })}
+              className={`w-full px-4 py-2 rounded-lg border ${
+                errors.username ? "border-red-500" : "border-gray-300"
+              } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+              placeholder='Choose a username'
+            />
+            {errors.username && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className='mt-1 text-sm text-red-500'
+              >
+                {errors.username.message}
+              </motion.p>
+            )}
+          </div>
+
           <div>
             <label className='block text-sm font-medium text-gray-700 mb-1'>
               Email
@@ -177,10 +184,10 @@ export default function RegisterForm() {
             <motion.input
               whileFocus={{ scale: 1.01 }}
               type='email'
-              name='email'
-              value={formData.email}
-              onChange={handleChange}
-              className={inputClasses(errors.email)}
+              {...register("email", { required: "Email is required" })}
+              className={`w-full px-4 py-2 rounded-lg border ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
               placeholder='Enter your email'
             />
             {errors.email && (
@@ -189,12 +196,11 @@ export default function RegisterForm() {
                 animate={{ opacity: 1 }}
                 className='mt-1 text-sm text-red-500'
               >
-                {errors.email}
+                {errors.email.message}
               </motion.p>
             )}
           </div>
 
-          {/* Password Fields */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>
@@ -203,10 +209,10 @@ export default function RegisterForm() {
               <motion.input
                 whileFocus={{ scale: 1.01 }}
                 type='password'
-                name='password'
-                value={formData.password}
-                onChange={handleChange}
-                className={inputClasses(errors.password)}
+                {...register("password", { required: "Password is required" })}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 placeholder='Enter your password'
               />
               {errors.password && (
@@ -215,7 +221,7 @@ export default function RegisterForm() {
                   animate={{ opacity: 1 }}
                   className='mt-1 text-sm text-red-500'
                 >
-                  {errors.password}
+                  {errors.password.message}
                 </motion.p>
               )}
             </div>
@@ -227,10 +233,12 @@ export default function RegisterForm() {
               <motion.input
                 whileFocus={{ scale: 1.01 }}
                 type='password'
-                name='confirmPassword'
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={inputClasses(errors.confirmPassword)}
+                {...register("confirmPassword", {
+                  required: "Confirm password is required",
+                })}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 placeholder='Confirm your password'
               />
               {errors.confirmPassword && (
@@ -239,13 +247,12 @@ export default function RegisterForm() {
                   animate={{ opacity: 1 }}
                   className='mt-1 text-sm text-red-500'
                 >
-                  {errors.confirmPassword}
+                  {errors.confirmPassword.message}
                 </motion.p>
               )}
             </div>
           </div>
 
-          {/* Additional Fields */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>
@@ -254,10 +261,10 @@ export default function RegisterForm() {
               <motion.input
                 whileFocus={{ scale: 1.01 }}
                 type='tel'
-                name='phoneNumber'
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                className={inputClasses(errors.phoneNumber)}
+                {...register("phoneNumber")}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  errors.phoneNumber ? "border-red-500" : "border-gray-300"
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 placeholder='Enter your phone number'
               />
             </div>
@@ -269,16 +276,15 @@ export default function RegisterForm() {
               <motion.input
                 whileFocus={{ scale: 1.01 }}
                 type='text'
-                name='organization'
-                value={formData.organization}
-                onChange={handleChange}
-                className={inputClasses(errors.organization)}
+                {...register("organization")}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  errors.organization ? "border-red-500" : "border-gray-300"
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 placeholder='Enter your organization'
               />
             </div>
           </div>
 
-          {/* Preferences */}
           <div>
             <label className='block text-sm font-medium text-gray-700 mb-2'>
               Event Preferences
@@ -290,9 +296,19 @@ export default function RegisterForm() {
                   type='button'
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => handlePreferenceChange(type)}
+                  onClick={() => {
+                    const currentPreferences = watch("preferences");
+                    if (currentPreferences.includes(type)) {
+                      setValue(
+                        "preferences",
+                        currentPreferences.filter((t) => t !== type)
+                      );
+                    } else {
+                      setValue("preferences", [...currentPreferences, type]);
+                    }
+                  }}
                   className={`p-2 rounded-lg text-sm ${
-                    formData.preferences.includes(type)
+                    watch("preferences").includes(type)
                       ? "bg-purple-600 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   } transition-colors duration-200`}
@@ -307,12 +323,11 @@ export default function RegisterForm() {
                 animate={{ opacity: 1 }}
                 className='mt-1 text-sm text-red-500'
               >
-                {errors.preferences}
+                {errors.preferences.message}
               </motion.p>
             )}
           </div>
 
-          {/* Submit Button */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

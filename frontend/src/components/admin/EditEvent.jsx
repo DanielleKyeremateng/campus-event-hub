@@ -3,10 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import {
-  validateEventCapacity,
-  validateEventDate,
-} from "../../utils/validation";
+import { validateEventCapacity } from "../../utils/validation";
 import { EVENT_TYPES, ERROR_MESSAGES, ROUTES } from "../../utils/constants";
 import { getEventById, updateEvent } from "../../services/eventService";
 
@@ -59,13 +56,13 @@ export default function EditEvent() {
       return;
     }
 
-    if (!validateEventDate(data.startDateTime)) {
-      setError("startDateTime", {
-        type: "manual",
-        message: ERROR_MESSAGES.INVALID_DATE,
-      });
-      return;
-    }
+    // if (!validateEventDate(data.startDateTime)) {
+    //   setError("startDateTime", {
+    //     type: "manual",
+    //     message: ERROR_MESSAGES.INVALID_DATE,
+    //   });
+    //   return;
+    // }
 
     try {
       const loadingToast = toast.loading("Updating event...");

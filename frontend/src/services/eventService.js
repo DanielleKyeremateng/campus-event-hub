@@ -13,7 +13,7 @@ const getRandomImage = () => {
 
 export const getEvents = async () => {
   try {
-    const response = await api.get("http://localhost:3001/api/events/public");
+    const response = await api.get("/events/public");
     return response?.data?.data?.map((event) => ({
       ...event,
       image: event.imageUrl || getRandomImage(),
@@ -26,7 +26,6 @@ export const getEvents = async () => {
 
 export const getMyRSVPEvents = async (userId) => {
   const events = await getEvents();
-  console.log(events);
   return events.filter((event) =>
     event.attendees.some((attendee) => attendee.user._id === String(userId))
   );

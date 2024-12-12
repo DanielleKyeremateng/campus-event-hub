@@ -4,6 +4,7 @@ import EventCard from "./EventCard";
 import EventSkeleton from "./EventSkeleton";
 import toast from "react-hot-toast";
 import { getEvents } from "../../services/eventService";
+import { useAuth } from "../../contexts/AuthContext";
 
 const EventList = () => {
   const [events, setEvents] = useState([]);
@@ -11,12 +12,13 @@ const EventList = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   const fetchEvents = async () => {
     try {
       const data = await getEvents();
       setEvents(data || []);
-      const types = ["all", ...new Set(data.map((event) => event.category))];
+      const types = ["all", ...new Set(data.map((event) => event.type))];
       setEventTypes(types);
       setFilteredEvents(data || []);
     } catch (error) {
@@ -31,12 +33,16 @@ const EventList = () => {
     fetchEvents();
   }, []);
 
+  const onRSVP = () => {
+    fetchEvents();
+  };
+
   useEffect(() => {
     if (selectedFilter === "all") {
       setFilteredEvents(events);
     } else {
       setFilteredEvents(
-        events.filter((event) => event.category === selectedFilter)
+        events.filter((event) => event.type === selectedFilter)
       );
     }
   }, [selectedFilter, events]);
@@ -101,7 +107,7 @@ const EventList = () => {
                     : "bg-white text-gray-600 hover:bg-gray-50"
                 } transition-all duration-200 shadow-md`}
               >
-                {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                {filter?.charAt(0).toUpperCase() + filter?.slice(1)}
               </motion.button>
             ))
           )}
@@ -124,7 +130,7 @@ const EventList = () => {
                 ))
             : filteredEvents.map((event) => (
                 <motion.div key={event._id} variants={itemVariants}>
-                  <EventCard event={event} />
+                  <EventCard event={event} userid={user.id} onRSVP={onRSVP} />
                 </motion.div>
               ))}
         </motion.div>

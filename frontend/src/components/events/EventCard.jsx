@@ -1,7 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
+import RSVPButton from "./RSVPButton";
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, userid, onRSVP }) => {
   return (
     <motion.div className='bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 h-[500px] flex flex-col'>
       <div className='relative h-48 flex-shrink-0'>
@@ -11,7 +12,7 @@ const EventCard = ({ event }) => {
           className='w-full h-full object-cover'
         />
         <div className='absolute top-4 right-4 bg-purple-600 text-white px-3 py-1 rounded-full text-sm'>
-          {event.category}
+          {event.type}
         </div>
       </div>
 
@@ -37,16 +38,19 @@ const EventCard = ({ event }) => {
               />
             </svg>
             <span className='truncate'>
-              {new Date(event.startDateTime).toLocaleDateString("en-US", {
+              {new Date(event?.date).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
               })}{" "}
               at{" "}
-              {new Date(event.startDateTime).toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {new Date(`1970-01-01T${event?.time}`).toLocaleTimeString(
+                "en-US",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }
+              )}
             </span>
           </div>
 
@@ -75,13 +79,7 @@ const EventCard = ({ event }) => {
         </div>
 
         <div className='mt-6'>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className='w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity'
-          >
-            Register Now
-          </motion.button>
+          <RSVPButton event={event} userid={userid} onRSVP={onRSVP} />
         </div>
       </div>
     </motion.div>

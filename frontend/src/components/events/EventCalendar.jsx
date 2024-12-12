@@ -47,7 +47,7 @@ const EventCalendar = () => {
 
   const getEventsForDate = (date) => {
     return events.filter((event) => {
-      const eventDate = parseISO(event.startDateTime);
+      const eventDate = parseISO(event.date);
       return isSameDay(eventDate, date);
     });
   };
@@ -100,7 +100,7 @@ const EventCalendar = () => {
                         key={event._id}
                         className='text-xs md:text-sm p-0.5 w-full mb-1 bg-purple-100 rounded text-purple-700'
                       >
-                        {event.name}
+                        {event.title}
                       </div>
                     ))}
                   </div>

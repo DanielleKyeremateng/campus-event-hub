@@ -2,26 +2,20 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import {
-  getEvents,
-  eventsCreatedByUser,
-  deleteEvent,
-} from "../../services/eventService";
+import { eventsCreatedByUser, deleteEvent } from "../../services/eventService";
 import { ROUTES } from "../../utils/constants";
 import { formatEventDate } from "../../utils/date";
+import { useAuth } from "../../contexts/AuthContext";
 
 const ManageEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  const { user } = useAuth();
 
   const fetchEvents = async () => {
     try {
-      const data = await getEvents();
+      const data = await eventsCreatedByUser(user.id);
       setEvents(data || []);
     } catch (error) {
       toast.error("Failed to fetch events");
@@ -29,6 +23,10 @@ const ManageEvents = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const handleDeleteEvent = async (eventId) => {
     if (window.confirm("Are you sure you want to delete this event?")) {
@@ -43,7 +41,7 @@ const ManageEvents = () => {
   };
 
   const filteredEvents = events.filter((event) =>
-    event?.name?.toLowerCase()?.includes(searchTerm?.toLowerCase())
+    event?.title?.toLowerCase()?.includes(searchTerm?.toLowerCase())
   );
 
   return (
@@ -128,10 +126,10 @@ const ManageEvents = () => {
                         exit={{ opacity: 0 }}
                       >
                         <td className='whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900'>
-                          {event.name}
+                          {event.title}
                         </td>
                         <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-500'>
-                          {formatEventDate(event.startDateTime)}
+                          {formatEventDate(event.date)}
                         </td>
                         <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-500'>
                           {event.location}
